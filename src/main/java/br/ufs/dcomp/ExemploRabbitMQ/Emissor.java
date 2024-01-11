@@ -11,7 +11,7 @@ public class Emissor {
   public static void main(String[] argv) throws Exception {
     ConnectionFactory factory = new ConnectionFactory();
     
-    factory.setHost("ec2-54-235-39-134.compute-1.amazonaws.com"); // Alterar
+    factory.setHost("ec2-34-226-193-61.compute-1.amazonaws.com"); // Alterar
     factory.setUsername("admin"); // Alterar
     factory.setPassword("password"); // Alterar
     factory.setVirtualHost("/");

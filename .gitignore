@@ -1,0 +1,6 @@
+/.vscode
+/target
+/target/.
+apache-maven-3.8.8
+compose-dev.yaml
+chave.pem
