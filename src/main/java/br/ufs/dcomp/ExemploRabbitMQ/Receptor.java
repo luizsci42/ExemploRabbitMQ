@@ -10,15 +10,16 @@ public class Receptor {
 
   public static void main(String[] argv) throws Exception {
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setHost("ip-da-instancia-da-aws"); // Alterar
-    factory.setUsername("usuário-do-rabbitmq-server"); // Alterar
-    factory.setPassword("senha-do-rabbitmq-server"); // Alterar
+    factory.setHost("ec2-54-226-89-184.compute-1.amazonaws.com"); // Alterar
+    factory.setUsername("admin"); // Alterar
+    factory.setPassword("password"); // Alterar
     factory.setVirtualHost("/");   
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
 
                       //(queue-name, durable, exclusive, auto-delete, params); 
     channel.queueDeclare(QUEUE_NAME, false,   false,     false,       null);
+    // channel.exchangeDeclare("ufs", "fanout");
     
     System.out.println(" [*] Esperando recebimento de mensagens...");
 
@@ -28,11 +29,11 @@ public class Receptor {
         String message = new String(body, "UTF-8");
         System.out.println(" [x] Mensagem recebida: '" + message + "'");
 
-                        //(deliveryTag,               multiple);
+        //(deliveryTag,               multiple);
         //channel.basicAck(envelope.getDeliveryTag(), false);
       }
     };
-                      //(queue-name, autoAck, consumer);    
+    //(queue-name, autoAck, consumer);    
     channel.basicConsume(QUEUE_NAME, true,    consumer);
   }
 }
