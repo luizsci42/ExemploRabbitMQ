@@ -1,3 +1,8 @@
+br/ufs/dcomp/chat/Send.class
 br/ufs/dcomp/ExemploRabbitMQ/Emissor.class
+br/ufs/dcomp/chat/Recv.class
+br/ufs/dcomp/chat/Recv$1.class
 br/ufs/dcomp/ExemploRabbitMQ/Receptor.class
 br/ufs/dcomp/ExemploRabbitMQ/Receptor$1.class
+br/ufs/dcomp/chat/Chat.class
+br/ufs/dcomp/chat/Chat$1.class

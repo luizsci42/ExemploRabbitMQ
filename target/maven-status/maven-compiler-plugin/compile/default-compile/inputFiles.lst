@@ -1,2 +1,5 @@
 /home/ubuntu/environment/ExemploRabbitMQ/src/main/java/br/ufs/dcomp/ExemploRabbitMQ/Receptor.java
+/home/ubuntu/environment/ExemploRabbitMQ/src/main/java/br/ufs/dcomp/chat/Recv.java
+/home/ubuntu/environment/ExemploRabbitMQ/src/main/java/br/ufs/dcomp/chat/Send.java
 /home/ubuntu/environment/ExemploRabbitMQ/src/main/java/br/ufs/dcomp/ExemploRabbitMQ/Emissor.java
+/home/ubuntu/environment/ExemploRabbitMQ/src/main/java/br/ufs/dcomp/chat/Chat.java

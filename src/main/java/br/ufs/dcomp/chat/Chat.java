@@ -1,110 +1,102 @@
 package br.ufs.dcomp.chat;
 
-import com.rabbitmq.client.AlreadyClosedException;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.*;
+
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.concurrent.TimeoutException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Chat {
-    private final static String QUEUE_NAME = "mensagens";
-    private static Channel channel;
-    private static Connection connection;
-    private static Send usuario;
-    private static Recv receptor;
-    private static boolean execucaoChat = true;
+  public static String currentReceiver = "";
+  public static String prompt = ">> ";
+  
+  public static void setReceiver(String user) {
+    currentReceiver = user;
+    setPrompt();
+  }
+  
+  public static void setPrompt() {
+    prompt = "@" + currentReceiver + ">> ";
+  }
+  
+  public static String getPrompt() {
+    return prompt;
+  }
+  
+  public static String getReceiver() {
+    return currentReceiver;
+  }
+  
+  public static String getTime() {
+    LocalDateTime now = LocalDateTime.now();
 
-    private static void executarChat() {
-        Scanner entrada;
-        String mensagem;
-        String nomeUsuario = usuario.getNomeUsuario();
-        String nomeReceptor = receptor.getNome();
-        String prompt = "@"+ nomeReceptor + " >> ";
+    DateTimeFormatter data = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+    String dataFormatada = data.format(now);
 
-        System.out.print(prompt);
-        entrada = new Scanner(System.in);
-        mensagem = entrada.nextLine();
+    DateTimeFormatter hora = DateTimeFormatter.ofPattern("HH:mm");
+    String horaFormatada = hora.format(now);
 
-        if (mensagem.startsWith("@")) {
-            nomeReceptor = mensagem.substring(1);
+    String dataHora = "(" + dataFormatada + " às " + horaFormatada + ") ";
+		
+		return dataHora;
+  }
 
-            receptor = new Recv(
-                nomeReceptor,
-                nomeUsuario,
-                QUEUE_NAME,
-                channel
-            );
-            usuario.setDestinatario(receptor);
-        }
-        else if (mensagem.equalsIgnoreCase("sair")) {
-            entrada.close();
-            try {
-                channel.close();
-            }
-            catch (IOException | TimeoutException e) {
-                System.out.println("Erro ao fechar canal");
-            }
-            catch (AlreadyClosedException e) {
-                System.out.println("Conexão finalizada");
-            }
-        }
-        usuario.enviarMensagens(mensagem);
+  public static void main(String[] argv) throws Exception {
+    ConnectionFactory factory = new ConnectionFactory();
+    factory.setHost("ec2-54-221-30-86.compute-1.amazonaws.com");
+    factory.setUsername("admin");
+    factory.setPassword("password");
+    factory.setVirtualHost("/");
+    Connection connection = factory.newConnection();
+    Channel channel = connection.createChannel();
+    
+    Scanner sc = new Scanner(System.in);
+    
+    System.out.print("User: ");
+    String user = sc.nextLine();
+    
+    String QUEUE_NAME = user;
+                      //(queue-name, durable, exclusive, auto-delete, params); 
+    channel.queueDeclare(QUEUE_NAME, false,   false,     false,       null);
+    
+    Consumer consumer = new DefaultConsumer(channel) {
+      public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)           throws IOException {
+
+        String message = new String(body, "UTF-8");
+        System.out.println("\n" + message);
+        System.out.print(getPrompt());
+
+      }
+    };
+                      //(queue-name, autoAck, consumer);    
+    channel.basicConsume(QUEUE_NAME, true,    consumer);
+    
+    String msg = "";
+    while(true) {
+      System.out.print(getPrompt());
+      msg = sc.nextLine();
+      
+      if(msg.isEmpty()) {
+        continue;
+      }
+      if(msg.charAt(0) == '@') {
+        setReceiver(msg.substring(1));
+        continue;
+      }
+      if(msg.equals(":quit")) {
+        break;
+      }
+      
+      String dataHora = getTime();
+      
+      String fullMsg = dataHora + user + " diz: " + msg;
+		
+		  channel.basicPublish("", getReceiver(), null,  fullMsg.getBytes("UTF-8"));
     }
-
-    public static void main(String args[]) {
-        String remoteHost = "ec2-34-224-65-82.compute-1.amazonaws.com";
-        // String porta = "15672";
-        String admin = "admin";
-        String senha = "password";
-
-        ConnectionFactory factory = new ConnectionFactory();
-        Scanner scanner = new Scanner(System.in);
-
-        factory.setHost(remoteHost);
-        factory.setUsername(admin);
-        factory.setPassword(senha);
-        factory.setVirtualHost("/");
-
-        try {
-            connection = factory.newConnection();
-            channel = connection.createChannel();
-
-            // (queue-name, durable, exclusive, auto-delete, params);
-            channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-
-            System.out.println("Sessão inciada. Para encerrar, digite \"sair\"");
-            System.out.print("User: ");
-            String nomeUsuario = scanner.nextLine();
-
-            System.out.println("Bem vindo, @" + nomeUsuario + "!");
-            System.out.println("Para enviar mensagem para outro usuário, digte \"@nome_usuario\"");
-            System.out.print(">> ");
-            String nomeReceptor = scanner.nextLine();
-
-            receptor = new Recv(nomeReceptor, nomeUsuario, QUEUE_NAME, channel);
-            usuario = new Send(nomeUsuario, channel, QUEUE_NAME);
-            usuario.setDestinatario(receptor);
-            executarChat();
-
-            while (execucaoChat) {
-                executarChat();
-            }
-
-            scanner.close();
-        }
-        catch (IOException IOException) {
-            System.out.println("IOException");
-        }
-        catch (TimeoutException timeout) {
-            System.out.println("Não foi possível estabelecer a conexão");
-        }
-        try {
-            connection.close();
-        }
-        catch (IOException IOException) {
-            System.out.println("IOException");
-        }
-    }
+    
+    channel.close();
+    connection.close();
+		
+  }
 }
